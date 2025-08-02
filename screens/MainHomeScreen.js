@@ -239,9 +239,11 @@ const HomeScreen = ({ navigation, route }) => {
             <Text style={styles.squareButtonText}>Licencias Técnicos</Text>
           </TouchableOpacity>
         </ScrollView>
-      </View>
-      </View>
 
+        
+      </View>
+      </View>
+{/* Cuadro solo visible para admin */}
       {/* Cuadro solo visible para admin */}
                 {userRole === 'admin' && (
             <View style={styles.squareButtonContainer}>
