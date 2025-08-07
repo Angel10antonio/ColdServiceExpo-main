@@ -467,22 +467,25 @@ export default function CostosReparacionesScreen() {
             value={facturaSub}
             onChangeText={setFacturaSub}
           />
-          <Button
-            title={
-              modoEdicionSub
-                ? 'Guardar Cambios en Subelemento'
-                : 'Agregar Subelemento'
-            }
-            onPress={agregarSubelemento}
-          />
-          <Button
-            title="Cancelar"
-            onPress={() => {
-              setElementoSeleccionado(null);
-              setModoEdicionSub(false);
-              setSubEnEdicion(null);
-            }}
-          />
+          <View>
+            <Button
+              title={
+                modoEdicionSub
+                  ? 'Guardar Cambios en Subelemento'
+                  : 'Agregar Subelemento'
+              }
+              onPress={agregarSubelemento}
+            />
+            <View style={{ marginTop: 10 }} /> 
+            <Button
+              title="Cancelar"
+              onPress={() => {
+                setElementoSeleccionado(null);
+                setModoEdicionSub(false);
+                setSubEnEdicion(null);
+              }}
+            />
+          </View>
         </View>
       ) : (
         <View style={styles.formContainer}>

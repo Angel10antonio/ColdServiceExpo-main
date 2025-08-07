@@ -28,6 +28,7 @@ import ViaticosScreen from './screens/ViaticosScreen';
 import LicenciasTecnicosScreen from './screens/LicenciasTecnicosScreen';
 import ImageViewer from './screens/ImageViewer';
 import ConsultarCostoReparacionScreen from './screens/ConsultarCostoReparacionScreen';
+import RegisterScreen from './screens/RegisterScreen';
 
 // Crea el navegador de pila
 const Stack = createNativeStackNavigator();
@@ -160,6 +161,11 @@ function MyStack() {
         name="CostoReparacionesScreen"
         component={CostoReparacionesScreen}
         options={{ title: 'Costo Reparación' }}
+      />
+      <Stack.Screen
+        name="RegisterScreen"
+        component={RegisterScreen}
+        options={{ title: 'Registrar' }}
       />
     </Stack.Navigator>
   );

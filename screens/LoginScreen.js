@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Text,
   StyleSheet,
@@ -9,17 +9,17 @@ import {
   View,
   ImageBackground,
   ActivityIndicator,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import firebase from '../database/firebase';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import firebase from "../database/firebase"; // Importa firebase como un objeto
 
-const { db, auth } = firebase;
+const { db, auth } = firebase; // Extrae db y auth del objeto exportado
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false); 
 
   const validateEmail = (email) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -28,35 +28,26 @@ const LoginScreen = ({ navigation }) => {
 
   const signIn = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Por favor, completa todos los campos.');
+      Alert.alert("Error", "Por favor, completa todos los campos.");
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert(
-        'Error',
-        'Por favor, introduce un correo electrónico válido.',
-      );
+      Alert.alert("Error", "Por favor, introduce un correo electrónico válido.");
       return;
     }
 
     setLoading(true);
     try {
-      const userCredential = await auth.signInWithEmailAndPassword(
-        email,
-        password,
-      );
+      const userCredential = await auth.signInWithEmailAndPassword(email, password); // Usa auth correctamente
       if (userCredential.user) {
-        const userDoc = await db
-          .collection('users')
-          .doc(userCredential.user.uid)
-          .get();
+        const userDoc = await db.collection("users").doc(userCredential.user.uid).get(); // Usa db correctamente
         const userRole = userDoc.data().role;
-        navigation.replace('HomeScreen', { userRole });
+        navigation.replace("HomeScreen", { userRole });
       }
     } catch (error) {
-      console.error('Error al iniciar sesión:', error);
-      Alert.alert('Error', 'Error al iniciar sesión: ' + error.message);
+      console.error("Error al iniciar sesión:", error);
+      Alert.alert("Error", "Error al iniciar sesión: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -64,15 +55,16 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <ImageBackground
-      source={require('../assets/login.jpg')}
+      source={require("../assets/login.jpg")}
       style={styles.background}
       resizeMode="cover"
     >
       <SafeAreaView style={styles.container}>
+        
         <Text style={styles.title}>COLD SERVICE</Text>
 
         <View style={styles.inputGroup}>
-          <Ionicons name="mail" size={24} color="#007BFF" style={styles.icon} />
+          <Ionicons name="mail" size={24} color="#000080" style={styles.icon} />
           <TextInput
             style={styles.input}
             placeholder="Correo electrónico"
@@ -85,12 +77,7 @@ const LoginScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.inputGroup}>
-          <Ionicons
-            name="lock-closed"
-            size={24}
-            color="#007BFF"
-            style={styles.icon}
-          />
+          <Ionicons name="lock-closed" size={24} color="#000080" style={styles.icon} />
           <TextInput
             style={styles.input}
             placeholder="Contraseña"
@@ -99,25 +86,30 @@ const LoginScreen = ({ navigation }) => {
             onChangeText={setPassword}
             secureTextEntry={!isPasswordVisible} // Alternar visibilidad
           />
-          <TouchableOpacity
-            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-          >
+          <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
             <Ionicons
-              name={isPasswordVisible ? 'eye' : 'eye-off'}
+              name={isPasswordVisible ? "eye" : "eye-off"}
               size={24}
-              color="#007BFF"
+              color="#000080"
               style={styles.icon}
             />
           </TouchableOpacity>
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#007BFF" />
+          <ActivityIndicator size="large" color="#000080" />
         ) : (
           <TouchableOpacity style={styles.button} onPress={signIn}>
             <Text style={styles.buttonText}>Iniciar Sesión</Text>
           </TouchableOpacity>
         )}
+
+        <TouchableOpacity onPress={() => navigation.navigate("RegisterScreen")}>
+          <Text style={styles.registerText}>
+            ¿No tienes cuenta? <Text style={styles.registerLink}>Regístrate</Text>
+          </Text>
+        </TouchableOpacity>
+
       </SafeAreaView>
     </ImageBackground>
   );
@@ -126,31 +118,31 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 40,
-    color: '#1A237E',
+    color: "#000080",
   },
   inputGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: "#fff",
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 10,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -162,27 +154,37 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   button: {
-    width: '100%',
-    backgroundColor: '#007BFF',
+    width: "100%",
+    backgroundColor: "#000080",
     padding: 15,
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 15,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
+  registerText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#333",
+  },
+  registerLink: {
+    color: "#000080",
+    fontWeight: "bold",
+  },
+
 });
 
 export default LoginScreen;
