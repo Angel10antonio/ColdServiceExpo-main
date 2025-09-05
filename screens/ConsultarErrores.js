@@ -1,11 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, item } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+} from 'react-native';
 import firebase from '../database/firebase';
-const { db } = firebase;
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { collection, getDocs } from 'firebase/firestore';
+
+const { db } = firebase;
 
 const ConsultarErroresScreen = () => {
   const [reportes, setReportes] = useState([]);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef(null);
+  const [contentHeight, setContentHeight] = useState(1);
+  const [scrollViewHeight, setScrollViewHeight] = useState(1);
+  const [atTop, setAtTop] = useState(true);
 
   const obtenerReportes = async () => {
     try {
@@ -24,6 +38,33 @@ const ConsultarErroresScreen = () => {
     obtenerReportes();
   }, []);
 
+  const handlePressArrow = () => {
+    if (!scrollRef.current) return;
+    if (atTop) {
+      scrollRef.current.scrollToEnd({ animated: true });
+    } else {
+      scrollRef.current.scrollToOffset({ offset: 0, animated: true });
+    }
+  };
+
+  useEffect(() => {
+    const listener = scrollY.addListener(({ value }) => {
+      setAtTop(value < 50);
+    });
+    return () => scrollY.removeListener(listener);
+  }, []);
+
+  const indicatorHeight =
+    (scrollViewHeight * scrollViewHeight) / contentHeight < 30
+      ? 30
+      : (scrollViewHeight * scrollViewHeight) / contentHeight;
+
+  const translateY = scrollY.interpolate({
+    inputRange: [0, Math.max(1, contentHeight - scrollViewHeight)],
+    outputRange: [0, scrollViewHeight - indicatorHeight],
+    extrapolate: 'clamp',
+  });
+
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Text style={styles.titulo}>{item.titulo}</Text>
@@ -38,47 +79,72 @@ const ConsultarErroresScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Reportes de Errores</Text>
-      <FlatList
+      <Animated.FlatList
+        ref={scrollRef}
         data={reportes}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        onContentSizeChange={(w, h) => setContentHeight(h)}
+        onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
       />
+      {/* Barra de scroll */}
+      <View style={styles.scrollBarContainer}>
+        <Animated.View
+          style={[styles.scrollBar, { height: indicatorHeight, transform: [{ translateY }] }]}
+        />
+      </View>
+
+      {/* Botón flotante */}
+      <TouchableOpacity style={styles.floatingArrow} onPress={handlePressArrow}>
+        <Icon name={atTop ? 'keyboard-arrow-down' : 'keyboard-arrow-up'} size={36} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#000080',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: 'white',
-  },
+  container: { flex: 1, backgroundColor: '#000080' },
+  scrollContainer: { padding: 20 },
   card: {
     backgroundColor: '#f1f1f1',
     borderRadius: 10,
     padding: 15,
     marginBottom: 15,
   },
-  titulo: {
-    fontSize: 22,
-    fontWeight: 'bold',
+  titulo: { fontSize: 22, fontWeight: 'bold' },
+  descripcion: { fontSize: 16, marginTop: 5 },
+  meta: { fontSize: 14, marginTop: 5, color: '#555' },
+  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: 'white' },
+
+  // Barra de scroll
+  scrollBarContainer: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 6,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 3,
   },
-  descripcion: {
-    fontSize: 16,
-    marginTop: 5,
-  },
-  meta: {
-    fontSize: 14,
-    marginTop: 5,
-    color: '#555',
+  scrollBar: { width: 6, backgroundColor: '#dbdbd7dc', borderRadius: 3 },
+
+  // Botón flotante
+  floatingArrow: {
+    position: 'absolute',
+    bottom: 60,
+    left: '50%',
+    transform: [{ translateX: -30 }],
+    backgroundColor: '#007bff',
+    borderRadius: 30,
+    padding: 8,
+    elevation: 5,
   },
 });
 

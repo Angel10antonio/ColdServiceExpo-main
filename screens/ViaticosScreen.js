@@ -11,17 +11,14 @@ import {
   Image,
   Platform,
   Dimensions,
-  ImageBackground,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { LinearGradient } from 'expo-linear-gradient';
 import NetInfo from '@react-native-community/netinfo';
 import firebaseInstance from '../database/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 const db = firebaseInstance.db;
-const storage = firebaseInstance.storage;
-const firebase = firebaseInstance.firebase;
 const { width } = Dimensions.get('window');
 
 const RegistroViaticosScreen = ({ navigation, route }) => {
@@ -35,7 +32,6 @@ const RegistroViaticosScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [comprobantes, setComprobantes] = useState([]);
-  const [currentUser] = useState(firebase.auth().currentUser);
   const [isConnected, setIsConnected] = useState(true);
 
   const tiposGasto = [
@@ -53,7 +49,6 @@ const RegistroViaticosScreen = ({ navigation, route }) => {
     return () => unsubscribe();
   }, []);
 
-  // Migrado a expo-image-picker y permisos compatibles
   const handleSelectImages = async () => {
     if (!isConnected) {
       Alert.alert('Sin conexión', 'Conéctate a internet para continuar');
@@ -64,7 +59,6 @@ const RegistroViaticosScreen = ({ navigation, route }) => {
       return;
     }
 
-    // Pide permisos si no los tiene
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
@@ -101,12 +95,6 @@ const RegistroViaticosScreen = ({ navigation, route }) => {
     setFecha(currentDate);
   };
 
-  // Ya no hay guardado local en disco; solo simulado
-  const uploadComprobantes = async () => {
-    // Aquí iría el código de subida a la nube si decides hacerlo en futuro
-    return comprobantes.map((comp) => comp.uri); // solo URIs de imagen
-  };
-
   const saveViatico = async () => {
     if (!form.tipoGasto || !form.monto || !form.descripcion) {
       Alert.alert('Campos requeridos', 'Completa los campos obligatorios');
@@ -114,24 +102,23 @@ const RegistroViaticosScreen = ({ navigation, route }) => {
     }
     setLoading(true);
     try {
-      const localImagePaths =
-        comprobantes.length > 0 ? await uploadComprobantes() : [];
-
       const newEntry = {
         ...form,
         monto: parseFloat(form.monto),
         fecha: fecha.toISOString(),
-        comprobantes: localImagePaths,
+        comprobantes: comprobantes.map((c) => c.uri), // aquí solo se guardan las URIs
         estado: 'pendiente',
-        usuario: 'usuario_demo',
+        usuario: 'usuario_demo', // aquí puedes poner firebase.auth().currentUser?.email o uid
         usuarioId: 'uid_demo',
         empresa: route.params?.company || 'Cold Service',
         createdAt: new Date().toISOString(),
       };
 
-      console.log('Viático guardado localmente:', newEntry);
+      // Guardar en Firestore en la colección "viaticos"
+      await addDoc(collection(db, 'viaticos'), newEntry);
 
-      Alert.alert('Éxito', 'Viático registrado localmente', [
+      console.log('📤 Viático enviado:', newEntry);
+      Alert.alert('Éxito', 'Viático registrado correctamente', [
         {
           text: 'OK',
           onPress: () => {
@@ -147,297 +134,193 @@ const RegistroViaticosScreen = ({ navigation, route }) => {
         },
       ]);
     } catch (error) {
-      Alert.alert('Error', error.message || 'Error al guardar');
+      console.error('Error al guardar viático:', error);
+      Alert.alert('Error', 'Hubo un problema al guardar el viático.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ImageBackground
-      source={require('../assets/favicon4.png')}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
-      <LinearGradient
-        colors={['rgba(5, 25, 55, 0.85)', 'rgba(0, 78, 146, 0.9)']}
-        style={styles.gradientOverlay}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.formContainer}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>REGISTRO DE VIÁTICOS</Text>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <Text style={styles.title}>REGISTRO DE VIÁTICOS</Text>
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Tipo de Gasto *</Text>
-                <View style={styles.radioGroup}>
-                  {tiposGasto.map((tipo) => (
-                    <TouchableOpacity
-                      key={tipo.id}
-                      style={[
-                        styles.radioButton,
-                        form.tipoGasto === tipo.id &&
-                          styles.radioButtonSelected,
-                      ]}
-                      onPress={() => handleChange('tipoGasto', tipo.id)}
-                    >
-                      <Text
-                        style={[
-                          styles.radioButtonText,
-                          form.tipoGasto === tipo.id &&
-                            styles.radioButtonTextSelected,
-                        ]}
-                      >
-                        {tipo.nombre}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Descripción *</Text>
-                <TextInput
-                  style={[styles.inputField, styles.multilineInput]}
-                  placeholder="Detalle del gasto..."
-                  placeholderTextColor="#95A5A6"
-                  value={form.descripcion}
-                  onChangeText={(text) => handleChange('descripcion', text)}
-                  multiline
-                  numberOfLines={3}
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Monto ($) *</Text>
-                <TextInput
-                  style={styles.inputField}
-                  placeholder="0.00"
-                  placeholderTextColor="#95A5A6"
-                  keyboardType="numeric"
-                  value={form.monto}
-                  onChangeText={(text) => handleChange('monto', text)}
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Proveedor</Text>
-                <TextInput
-                  style={styles.inputField}
-                  placeholder="Nombre del proveedor"
-                  placeholderTextColor="#95A5A6"
-                  value={form.proveedor}
-                  onChangeText={(text) => handleChange('proveedor', text)}
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Fecha</Text>
-                <TouchableOpacity
-                  style={styles.dateInput}
-                  onPress={() => setShowDatePicker(true)}
-                >
-                  <Text style={{ fontSize: 20, marginRight: 10 }}>📅</Text>
-                  <Text style={styles.dateText}>
-                    {fecha.toLocaleDateString('es-MX')}
-                  </Text>
-                </TouchableOpacity>
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={fecha}
-                    mode="date"
-                    display="default"
-                    onChange={handleDateChange}
-                  />
-                )}
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>COMPROBANTES</Text>
-
-              <TouchableOpacity
-                style={[
-                  styles.scanButton,
-                  comprobantes.length >= 5 && styles.disabledButton,
-                ]}
-                onPress={handleSelectImages}
-                disabled={comprobantes.length >= 5}
-              >
-                <Text style={styles.scanButtonText}>
-                  {comprobantes.length >= 5
-                    ? 'LÍMITE 5 FOTOS'
-                    : '📸 AGREGAR FOTOS'}
-                </Text>
-              </TouchableOpacity>
-
-              {comprobantes.length > 0 ? (
-                <ScrollView horizontal style={styles.imagesContainer}>
-                  {comprobantes.map((comp, index) => (
-                    <View key={index} style={styles.imageCard}>
-                      <Image
-                        source={{ uri: comp.uri }}
-                        style={styles.previewImage}
-                      />
-                      <TouchableOpacity
-                        style={styles.deleteImageButton}
-                        onPress={() =>
-                          setComprobantes(
-                            comprobantes.filter((_, i) => i !== index),
-                          )
-                        }
-                      >
-                        <Text style={{ fontSize: 18, color: '#E74C3C' }}>
-                          ❌
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </ScrollView>
-              ) : (
-                <View style={styles.emptyImagesContainer}>
-                  <Text style={{ fontSize: 40 }}>📷</Text>
-                  <Text style={styles.emptyImagesText}>
-                    No hay fotos agregadas
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-
+      <Text style={styles.label}>Tipo de Gasto *</Text>
+      <View style={styles.radioGroup}>
+        {tiposGasto.map((tipo) => (
           <TouchableOpacity
+            key={tipo.id}
             style={[
-              styles.saveButton,
-              (loading || !isConnected) && styles.disabledButton,
+              styles.radioButton,
+              form.tipoGasto === tipo.id && styles.radioButtonSelected,
             ]}
-            onPress={saveViatico}
-            disabled={loading || !isConnected}
+            onPress={() => handleChange('tipoGasto', tipo.id)}
           >
-            {loading ? (
-              <ActivityIndicator color="#FFF" />
-            ) : (
-              <Text style={styles.saveButtonText}>
-                {isConnected ? '💾 GUARDAR VIÁTICO' : '📵 SIN CONEXIÓN'}
-              </Text>
-            )}
+            <Text
+              style={[
+                styles.radioButtonText,
+                form.tipoGasto === tipo.id && styles.radioButtonTextSelected,
+              ]}
+            >
+              {tipo.nombre}
+            </Text>
           </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text style={styles.label}>Descripción *</Text>
+      <TextInput
+        style={[styles.input, styles.multilineInput]}
+        placeholder="Detalle del gasto..."
+        placeholderTextColor="#95A5A6"
+        value={form.descripcion}
+        onChangeText={(text) => handleChange('descripcion', text)}
+        multiline
+        numberOfLines={3}
+      />
+
+      <Text style={styles.label}>Monto ($) *</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="0.00"
+        placeholderTextColor="#95A5A6"
+        keyboardType="numeric"
+        value={form.monto}
+        onChangeText={(text) => handleChange('monto', text)}
+      />
+
+      <Text style={styles.label}>Proveedor</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nombre del proveedor"
+        placeholderTextColor="#95A5A6"
+        value={form.proveedor}
+        onChangeText={(text) => handleChange('proveedor', text)}
+      />
+
+      <Text style={styles.label}>Fecha</Text>
+      <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+        <Text style={styles.dateButtonText}>📅 {fecha.toLocaleDateString('es-MX')}</Text>
+      </TouchableOpacity>
+      {showDatePicker && (
+        <DateTimePicker
+          value={fecha}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+        />
+      )}
+
+      <Text style={styles.label}>Comprobantes</Text>
+      <TouchableOpacity
+        style={[styles.scanButton, comprobantes.length >= 5 && styles.disabledButton]}
+        onPress={handleSelectImages}
+        disabled={comprobantes.length >= 5}
+      >
+        <Text style={styles.scanButtonText}>
+          {comprobantes.length >= 5 ? 'LÍMITE 5 FOTOS' : '📸 AGREGAR FOTOS'}
+        </Text>
+      </TouchableOpacity>
+
+      {comprobantes.length > 0 ? (
+        <ScrollView horizontal style={styles.imagesContainer}>
+          {comprobantes.map((comp, index) => (
+            <View key={index} style={styles.imageCard}>
+              <Image source={{ uri: comp.uri }} style={styles.previewImage} />
+              <TouchableOpacity
+                style={styles.deleteImageButton}
+                onPress={() => setComprobantes(comprobantes.filter((_, i) => i !== index))}
+              >
+                <Text style={{ fontSize: 18, color: '#E74C3C' }}>❌</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
         </ScrollView>
-      </LinearGradient>
-    </ImageBackground>
+      ) : (
+        <View style={styles.emptyImagesContainer}>
+          <Text style={{ fontSize: 40 }}>📷</Text>
+          <Text style={styles.emptyImagesText}>No hay fotos agregadas</Text>
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={[styles.saveButton, (loading || !isConnected) && styles.disabledButton]}
+        onPress={saveViatico}
+        disabled={loading || !isConnected}
+      >
+        {loading ? (
+          <ActivityIndicator color="#FFF" />
+        ) : (
+          <Text style={styles.saveButtonText}>
+            {isConnected ? '💾 GUARDAR VIÁTICO' : '📵 SIN CONEXIÓN'}
+          </Text>
+        )}
+      </TouchableOpacity>
+      <View style={{ height: 20 }} />
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
+  container: {
+    flexGrow: 1,
+    padding: 10,
+    backgroundColor: '#f5f5f5',
   },
-  gradientOverlay: {
-    flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 40 : 20,
-  },
-  scrollContainer: {
-    paddingBottom: 40,
-  },
-  formContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  section: {
-    backgroundColor: 'rgba(255, 255, 255, 0.97)',
-    borderRadius: 14,
-    padding: 20,
-    marginBottom: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  sectionTitle: {
-    fontSize: 14,
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#7F8C8D',
-    marginBottom: 15,
-    letterSpacing: 0.5,
-  },
-  inputContainer: {
     marginBottom: 20,
+    textAlign: 'center',
+    color: '#333',
   },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#34495E',
-    marginBottom: 8,
-  },
-  inputField: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    padding: 15,
+  label: {
     fontSize: 16,
-    color: '#2C3E50',
-    backgroundColor: '#FBFCFC',
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#007bff',
+  },
+  input: {
+    height: 50,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: 20,
+    paddingHorizontal: 15,
+    backgroundColor: '#fff',
+    fontSize: 16,
   },
   multilineInput: {
-    minHeight: 80,
+    height: 120,
     textAlignVertical: 'top',
   },
-  radioGroup: {
+  dateButton: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: 5,
-  },
-  radioButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#3498DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007bff',
+    borderRadius: 10,
+    padding: 12,
     marginBottom: 10,
-    backgroundColor: '#FFF',
-    minWidth: width * 0.28,
-    alignItems: 'center',
   },
-  radioButtonSelected: {
-    backgroundColor: '#3498DB',
-  },
-  radioButtonText: {
-    color: '#3498DB',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  radioButtonTextSelected: {
-    color: '#FFF',
-  },
-  dateInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    padding: 15,
-    backgroundColor: '#FBFCFC',
-  },
-  dateText: {
-    marginLeft: 10,
+  dateButtonText: {
+    color: '#fff',
     fontSize: 16,
-    color: '#2C3E50',
   },
   scanButton: {
-    backgroundColor: '#27AE60',
-    borderRadius: 8,
-    padding: 15,
+    backgroundColor: '#28a745',
+    borderRadius: 10,
+    padding: 12,
     alignItems: 'center',
     marginBottom: 15,
   },
   scanButtonText: {
-    color: '#FFF',
-    fontWeight: '600',
+    color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  disabledButton: {
+    backgroundColor: '#95A5A6',
   },
   imagesContainer: {
     marginTop: 10,
@@ -482,20 +365,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   saveButton: {
-    backgroundColor: '#2ECC71',
-    borderRadius: 8,
-    padding: 18,
-    marginHorizontal: 20,
-    marginTop: 10,
+    backgroundColor: '#007bff',
+    borderRadius: 10,
+    padding: 15,
     alignItems: 'center',
-  },
-  disabledButton: {
-    backgroundColor: '#95A5A6',
+    marginBottom: 30,
   },
   saveButtonText: {
-    color: '#FFF',
+    color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
-    fontSize: 16,
+  },
+  radioGroup: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 20,
+  },
+  radioButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#007bff',
+    marginRight: 10,
+    marginBottom: 10,
+    backgroundColor: '#fff',
+  },
+  radioButtonSelected: {
+    backgroundColor: '#007bff',
+  },
+  radioButtonText: {
+    color: '#007bff',
+    fontWeight: 'bold',
+  },
+  radioButtonTextSelected: {
+    color: '#fff',
   },
 });
 

@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesome } from '@expo/vector-icons';
-import { TouchableOpacity, Alert, StyleSheet, View, Text, Modal, Button, TouchableWithoutFeedback, Animated, Dimensions /*, TextInput*/ } from 'react-native';
+import { TouchableOpacity, Alert, StyleSheet, View, Text, Modal, TouchableWithoutFeedback, Animated, Dimensions } from 'react-native';
 import firebase from '../database/firebase';
 
 import MainHomeScreen from './MainHomeScreen'; 
 import ConfigScreen from './ConfigScreen';
-import MensajesScreen from './Chat';
+import MensajesScreen from './UsuariosListaScreen';
 
 const screenWidth = Dimensions.get('window').width;
 const Tab = createBottomTabNavigator();
@@ -19,22 +19,42 @@ export default function HomeTabs({ route, navigation }) {
 
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
-
-  // 🔹 Comentado porque solo era para actualizar datos temporalmente
-  // const [nuevoNombre, setNuevoNombre] = useState('');
-  // const [nuevoTelefono, setNuevoTelefono] = useState('');
+  const [pin, setPin] = useState('');
 
   const usuario = firebase.auth.currentUser;
+
+  // 🔹 Función para generar un PIN único de 4 dígitos
+  const generarPinUnico = async () => {
+    let unico = false;
+    let nuevoPin = '';
+    while (!unico) {
+      nuevoPin = Math.floor(1000 + Math.random() * 9000).toString();
+      const query = await firebase.db.collection('users').where('pin', '==', nuevoPin).get();
+      if (query.empty) {
+        unico = true;
+      }
+    }
+    return nuevoPin;
+  };
 
   useEffect(() => {
     const cargarDatos = async () => {
       if (usuario) {
         try {
-          const doc = await firebase.db.collection('users').doc(usuario.uid).get();
+          const docRef = firebase.db.collection('users').doc(usuario.uid);
+          const doc = await docRef.get();
           if (doc.exists) {
             const data = doc.data();
             setNombre(data.nombre || '');
             setTelefono(data.telefono || '');
+
+            if (!data.pin) {
+              const nuevoPin = await generarPinUnico();
+              await docRef.update({ pin: nuevoPin });
+              setPin(nuevoPin);
+            } else {
+              setPin(data.pin);
+            }
           }
         } catch (error) {
           console.error("Error obteniendo datos del usuario:", error);
@@ -43,25 +63,6 @@ export default function HomeTabs({ route, navigation }) {
     };
     cargarDatos();
   }, []);
-
-  // 🔹 Función de actualización comentada
-  // const actualizarUsuario = async () => {
-  //   if (usuario) {
-  //     try {
-  //       await firebase.db.collection('users').doc(usuario.uid).update({
-  //         nombre: nuevoNombre || nombre,
-  //         telefono: nuevoTelefono || telefono,
-  //       });
-  //       Alert.alert('Éxito', 'Datos actualizados correctamente');
-  //       setNombre(nuevoNombre || nombre);
-  //       setTelefono(nuevoTelefono || telefono);
-  //       setNuevoNombre('');
-  //       setNuevoTelefono('');
-  //     } catch (error) {
-  //       Alert.alert('Error', 'No se pudieron actualizar los datos');
-  //     }
-  //   }
-  // };
 
   const openSidePanel = () => {
     setModalVisible(true);
@@ -183,6 +184,11 @@ export default function HomeTabs({ route, navigation }) {
                 <Text style={styles.label}>{telefono || 'Cargando...'}</Text>
               </View>
 
+              <View style={styles.row}>
+                <FontAwesome name="lock" size={20} color="grey" />
+                <Text style={styles.label}>PIN: {pin || 'Cargando...'}</Text>
+              </View>
+
               {/* 🔹 Bloque temporal para actualizar datos (comentado)
               <View style={{ marginTop: 20 }}>
                 <Text style={{ fontWeight: 'bold' }}>Actualizar Datos</Text>
@@ -206,6 +212,7 @@ export default function HomeTabs({ route, navigation }) {
                 />
               </View>
               */}
+
             </>
           ) : (
             <Text>No hay usuario autenticado</Text>
@@ -215,8 +222,8 @@ export default function HomeTabs({ route, navigation }) {
             style={styles.logoutButton}
             onPress={cerrarSesion}
           >
-          <Text style={styles.logoutText}>Cerrar Sesión</Text>
-        </TouchableOpacity>
+            <Text style={styles.logoutText}>Cerrar Sesión</Text>
+          </TouchableOpacity>
         </Animated.View>
       </Modal>
     </>
@@ -254,22 +261,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 13,
   },
-  // input: {
-  //   borderWidth: 1,
-  //   borderColor: '#ccc',
-  //   padding: 8,
-  //   marginTop: 10,
-  //   borderRadius: 5,
-  // },
   logoutButton: {
-  borderWidth: 2,
-  borderColor: '#ca0b04ff',
-  paddingVertical: 10,
-  paddingHorizontal: 20,
-  borderRadius: 8,
-  backgroundColor: '#ca0b04ff', // fondo blanco
-  alignItems: 'center',
-  marginTop: 10,
+    borderWidth: 2,
+    borderColor: '#ca0b04ff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: '#ca0b04ff',
+    alignItems: 'center',
+    marginTop: 10,
   },
   logoutText: {
     color: '#fff',

@@ -6,13 +6,14 @@ const { auth, db } = firebaseApp;               // Desestructura auth y db
 
 const RegistrarScreen = ({ navigation }) => {
   const [nombre, setNombre] = useState("");
+  const [empresa, setEmpresa] = useState("");  // 🆕 Nuevo campo
   const [telefono, setTelefono] = useState("");
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const handleRegister = async () => {
-    if (!nombre || !telefono || !correo || !password) {
+    if (!nombre || !empresa || !telefono || !correo || !password) {
       Alert.alert("Error", "Por favor completa todos los campos");
       return;
     }
@@ -26,6 +27,7 @@ const RegistrarScreen = ({ navigation }) => {
       await db.collection("users").doc(user.uid).set({
         uid: user.uid,
         nombre,
+        empresa,   // 🆕 Guardar empresa
         telefono,
         correo,
         role: "usuario",  // Rol asignado al registrar
@@ -51,6 +53,15 @@ const RegistrarScreen = ({ navigation }) => {
         onChangeText={setNombre}
       />
 
+      {/* 🆕 Campo empresa */}
+      <TextInput
+        style={styles.input}
+        placeholder="Empresa"
+        placeholderTextColor="#888"
+        value={empresa}
+        onChangeText={setEmpresa}
+      />
+
       <TextInput
         style={styles.input}
         placeholder="Teléfono"
@@ -70,9 +81,10 @@ const RegistrarScreen = ({ navigation }) => {
         autoCapitalize="none"
       />
 
+      {/* Campo de contraseña con el mismo estilo que los otros */}
       <View style={styles.passwordContainer}>
         <TextInput
-          style={[styles.input, { flex: 1, marginBottom: 0, shadowOpacity: 0 }]}
+          style={styles.passwordInput}
           placeholder="Contraseña"
           placeholderTextColor="#888"
           value={password}
@@ -83,7 +95,7 @@ const RegistrarScreen = ({ navigation }) => {
           <Ionicons
             name={isPasswordVisible ? "eye" : "eye-off"}
             size={24}
-            color="#007BFF"
+            color="#000080"
             style={styles.eyeIcon}
           />
         </TouchableOpacity>
@@ -132,7 +144,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
     borderRadius: 10,
-    paddingHorizontal: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 6,
     marginBottom: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -140,12 +153,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  passwordInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+  },
   eyeIcon: {
     marginLeft: 10,
   },
   button: {
     width: "100%",
-    backgroundColor: "#007BFF",
+    backgroundColor: "#000080",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",

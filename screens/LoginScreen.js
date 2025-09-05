@@ -61,7 +61,7 @@ const LoginScreen = ({ navigation }) => {
     >
       <SafeAreaView style={styles.container}>
         
-        <Text style={styles.title}>COLD SERVICE</Text>
+        <Text style={styles.title}>Servicios de Refrigración</Text>
 
         <View style={styles.inputGroup}>
           <Ionicons name="mail" size={24} color="#000080" style={styles.icon} />
@@ -104,11 +104,13 @@ const LoginScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
 
+      <View style={{ flexDirection: "row", marginTop: 20 }}>
+        <Text style={styles.registerText}>¿No tienes cuenta? </Text>
         <TouchableOpacity onPress={() => navigation.navigate("RegisterScreen")}>
-          <Text style={styles.registerText}>
-            ¿No tienes cuenta? <Text style={styles.registerLink}>Regístrate</Text>
-          </Text>
+          <Text style={styles.registerLink}>Regístrate</Text>
         </TouchableOpacity>
+      </View>
+
 
       </SafeAreaView>
     </ImageBackground>
@@ -176,11 +178,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   registerText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#333",
+  fontSize: 16,
+  color: "#333",
   },
   registerLink: {
+    fontSize: 16,
     color: "#000080",
     fontWeight: "bold",
   },

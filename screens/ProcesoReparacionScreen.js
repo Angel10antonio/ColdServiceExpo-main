@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,10 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import firebase from '../database/firebase';
-import Signature from 'react-native-signature-canvas'; // Asegúrate de tener esta importación
+import { collection, addDoc, getDoc, doc } from 'firebase/firestore';
+//import Signature from 'react-native-signature-canvas'; // Asegúrate de tener esta importación
 import Icon from 'react-native-vector-icons/MaterialIcons'; // Para el icono en el botón
-const { db } = firebase;
+const { db, auth } = firebase;
 
 const CapturaProcesoReparacionScreen = () => {
   const [plaza, setPlaza] = useState('');
@@ -31,7 +32,6 @@ const CapturaProcesoReparacionScreen = () => {
   const [reporte, setReporte] = useState('');
   const [ruta, setRuta] = useState('');
   const [cuadrilla, setCuadrilla] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showHoraSalidaPicker, setShowHoraSalidaPicker] = useState(false);
@@ -55,7 +55,35 @@ const CapturaProcesoReparacionScreen = () => {
   const [motivoCarga, setMotivoCarga] = useState([]);
   const [otroMotivo, setOtroMotivo] = useState(''); // Aquí defines el setter correctamente
   const [signature, setSignature] = useState(null);
-  const [showSignatureModal, setShowSignatureModal] = useState(false); // Para controlar el modal de firma
+  //const [showSignatureModal, setShowSignatureModal] = useState(false); // Para controlar el modal de firma
+const [pin, setPin] = useState('');
+  const [userNip, setUserNip] = useState(null);
+  const [loading, setLoading] = useState(false);
+// Traer el NIP del usuario logueado
+  useEffect(() => {
+  const fetchUserNip = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      console.log('Usuario logueado:', currentUser);
+
+      if (!currentUser) return;
+
+      const userRef = doc(db, 'users', currentUser.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        console.log('Documento del usuario:', userDoc.data());
+        setUserNip(String(userDoc.data().pin)); // convertimos a string
+      } else {
+        console.warn('No se encontró documento de usuario en Firestore');
+      }
+    } catch (error) {
+      console.error('Error al obtener NIP del usuario:', error);
+    }
+  };
+
+  fetchUserNip();
+}, []);
 
   const handlePress = (option) => {
     if (motivoCarga.includes(option)) {
@@ -144,10 +172,24 @@ const CapturaProcesoReparacionScreen = () => {
       return;
     }
 
-    if (!signature) {
-      Alert.alert('Error', 'Por favor, firma antes de guardar.');
-      return;
-    }
+    //if (!signature) {
+     // Alert.alert('Error', 'Por favor, firma antes de guardar.');
+     // return;
+    //}
+    if (!userNip) {
+          Alert.alert('Error', 'No se pudo verificar tu PIN, intenta más tarde');
+          return;
+        }
+    
+        if (pin.length !== 4) {
+          Alert.alert('Error', 'El PIN debe tener 4 dígitos');
+          return;
+        }
+    
+        if (pin !== String(userNip)) {
+          Alert.alert('Error', 'El PIN ingresado no coincide con tu cuenta');
+          return;
+        }
 
     // Verificar el contenido de los materiales antes de enviarlos a Firebase
     //console.log('Materiales:', materiales);
@@ -181,6 +223,7 @@ const CapturaProcesoReparacionScreen = () => {
         motivo_carga: motivoFinal, // Guardamos el motivo de la carga
         otro_motivo: otroMotivo,
         trabajo_pendiente: trabajoPendiente,
+        enviadoPor: auth.currentUser ? auth.currentUser.email : '',
         fecha_programada: fechaProgramada,
         comentarios_adicionales: comentariosAdicionales,
         materiales: materiales.map((material) => ({
@@ -220,6 +263,7 @@ const CapturaProcesoReparacionScreen = () => {
       setTrabajoPendiente('');
       setComentariosAdicionales(''); // Limpiar "Comentarios Adicionales"
       setSignature(null);
+      setPin('');
     } catch (error) {
       console.error('Error al guardar datos:', error);
       Alert.alert(
@@ -761,78 +805,26 @@ const CapturaProcesoReparacionScreen = () => {
         numberOfLines={5}
       />
 
-      {/* Mostrar la firma en el formulario */}
-      {signature && (
-        <View style={{ alignItems: 'center', marginBottom: 20 }}>
-          <Text style={styles.label}>Firma</Text>
-          <Image
-            source={{ uri: signature }}
-            style={{
-              width: 350,
-              height: 220,
-              borderWidth: 1,
-              borderColor: '#ccc',
-            }}
-          />
-        </View>
-      )}
-
-      {/* Botón para abrir el modal de firma */}
-      <TouchableOpacity
-        style={[styles.photoButton, { backgroundColor: '#b7001f' }]}
-        onPress={() => setShowSignatureModal(true)}
-      >
-        <Icon name="edit" size={20} color="#fff" />
-        <Text style={styles.photoButtonText}>Firmar</Text>
-      </TouchableOpacity>
-
-      {loading ? (
-        <ActivityIndicator size="large" color="#007bff" />
-      ) : (
-        <TouchableOpacity style={styles.saveButton} onPress={handleSubmit}>
+      {/* Input de PIN */}
+              <Text style={styles.label}>Ingrese su PIN de 4 dígitos</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                maxLength={4}
+                secureTextEntry={true}
+                value={pin}
+                onChangeText={setPin}
+              />
+      
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleSubmit}
+              disabled={loading}
+            >
           <Text style={styles.saveButtonText}>Guardar Reporte</Text>
-        </TouchableOpacity>
-      )}
-      <View style={{ height: 60 }} />
-
-      {/* Modal de Firma */}
-      <Modal visible={showSignatureModal} animationType="slide">
-        <View style={{ flex: 1 }}>
-          <Signature
-            onOK={handleSignature}
-            onEmpty={() => Alert.alert('Firma vacía')}
-            onClear={() => console.log('clear')}
-            onEnd={() => console.log('end')}
-            descriptionText="Firma aquí"
-            clearText="Limpiar"
-            confirmText="Guardar"
-            // Elimina webStyle si no es necesario o ajústalo
-            webStyle={`
-        .m-signature-pad--footer { 
-          display: flex;
-          justify-content: space-between;
-          padding: 10px;
-        }
-        .m-signature-pad--footer button {
-          background-color: #007bff;
-          color: #fff;
-          padding: 10px;
-          border: none;
-          border-radius: 5px;
-        }
-      `}
-          />
-          <TouchableOpacity
-            style={[
-              styles.saveButton,
-              { backgroundColor: '#dc3545', marginTop: 1 },
-            ]}
-            onPress={() => setShowSignatureModal(false)}
-          >
-            <Text style={styles.saveButtonText}>Cancelar</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
+      </TouchableOpacity>
+      
+      
     </ScrollView>
   );
 };
