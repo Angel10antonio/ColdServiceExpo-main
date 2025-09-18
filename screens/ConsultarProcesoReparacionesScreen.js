@@ -82,8 +82,8 @@ const ConsultarProcesoReparacionScreen = () => {
   const [atTop, setAtTop] = useState(true);
 
   const [modalRechazoVisible, setModalRechazoVisible] = useState(false);
-const [razonRechazo, setRazonRechazo] = useState('');
-const [idRechazando, setIdRechazando] = useState(null);
+  const [razonRechazo, setRazonRechazo] = useState('');
+  const [idRechazando, setIdRechazando] = useState(null);
 
 
 

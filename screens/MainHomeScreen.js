@@ -15,23 +15,97 @@ const guidelineBaseWidth = 360;
 const scale = (size) => (screenWidth / guidelineBaseWidth) * size;
 
 const HomeScreen = ({ navigation, route }) => {
-  const { userRole } = route.params;
+  const role = route.params?.userRole?.trim().toLowerCase();
 
   const [activeIndex1, setActiveIndex1] = useState(0);
   const [activeIndex2, setActiveIndex2] = useState(0);
   const [activeIndex3, setActiveIndex3] = useState(0);
   const [activeIndex4, setActiveIndex4] = useState(0);
   const [activeIndex5, setActiveIndex5] = useState(0);
-  const [activeIndex6, setActiveIndex6] = useState(0);
-
- 
 
   const handleScroll = (e, setActive) => {
-  const slideSize = e.nativeEvent.layoutMeasurement.width;
-  const index = Math.round(e.nativeEvent.contentOffset.x / slideSize);
-  setActive(index);
-};
+    const slideSize = e.nativeEvent.layoutMeasurement.width;
+    const index = Math.round(e.nativeEvent.contentOffset.x / slideSize);
+    setActive(index);
+  };
 
+  // --------------------
+  // MENÚ GERENTE
+  // --------------------
+  if (role === 'gerente') {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.header}>MENÚ GERENTE</Text>
+
+        <View style={[styles.horizontalContainer, { justifyContent: 'center' }]}>
+          <TouchableOpacity
+            style={[styles.squareButtonContainer, { width: scale(150), height: scale(130) }]}
+            onPress={() => navigation.navigate('ConsultarProcesoReparacionesScreen')}
+          >
+            <Image
+              source={require('../assets/consultar.png')}
+              style={{ width: scale(80), height: scale(50), marginBottom: 5 }}
+              resizeMode="contain"
+            />
+            <Text style={styles.squareButtonText}>Consultar Reparación</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.squareButtonContainer, { width: scale(150), height: scale(130), marginLeft: scale(20) }]}
+            onPress={() => navigation.navigate('ConsultarEquiposConfiguradosScreen')}
+          >
+            <Image
+              source={require('../assets/consultar.png')}
+              style={{ width: scale(80), height: scale(50), marginBottom: 5 }}
+              resizeMode="contain"
+            />
+            <Text style={styles.squareButtonText}>Ver Equipos</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // --------------------
+  // MENÚ GERENTE DE ZONA
+  // --------------------
+  if (role === 'gerentezona') {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.header}>MENÚ GERENTE DE ZONA</Text>
+
+        <View style={[styles.horizontalContainer, { justifyContent: 'center' }]}>
+          <TouchableOpacity
+            style={[styles.squareButtonContainer, { width: scale(150), height: scale(130) }]}
+            onPress={() => navigation.navigate('ConsultarProcesoReparacionesScreen')}
+          >
+            <Image
+              source={require('../assets/consultar.png')}
+              style={{ width: scale(80), height: scale(50), marginBottom: 5 }}
+              resizeMode="contain"
+            />
+            <Text style={styles.squareButtonText}>Reparaciones Zona</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.squareButtonContainer, { width: scale(150), height: scale(130), marginLeft: scale(20) }]}
+            onPress={() => navigation.navigate('ConsultarEquiposConfiguradosScreen')}
+          >
+            <Image
+              source={require('../assets/consultar.png')}
+              style={{ width: scale(80), height: scale(50), marginBottom: 5 }}
+              resizeMode="contain"
+            />
+            <Text style={styles.squareButtonText}>Técnicos Zona</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // --------------------
+  // MENÚ ADMIN / USUARIO
+  // --------------------
   return (
     <View style={styles.container}>
       <Text style={styles.header}>MENÚ</Text>
@@ -210,7 +284,6 @@ const HomeScreen = ({ navigation, route }) => {
             onScroll={(e) => handleScroll(e, setActiveIndex5)}
             scrollEventThrottle={16}
           >
-            {/* Botón a ViaticosScreen */}
             <TouchableOpacity
               style={styles.squareButton}
               onPress={() => navigation.navigate('ViaticosScreen')}
@@ -223,7 +296,6 @@ const HomeScreen = ({ navigation, route }) => {
               <Text style={styles.squareButtonText}>Viáticos</Text>
             </TouchableOpacity>
 
-            {/* Botón a ConsultarViaticosScreen */}
             <TouchableOpacity
               style={styles.squareButton}
               onPress={() => navigation.navigate('ConsultarViaticosScreen')}
@@ -237,7 +309,6 @@ const HomeScreen = ({ navigation, route }) => {
             </TouchableOpacity>
           </ScrollView>
 
-          {/* Dots */}
           <View style={styles.dotsContainer}>
             <View style={[styles.dot, activeIndex5 === 0 ? styles.activeDot : styles.inactiveDot]} />
             <View style={[styles.dot, activeIndex5 === 1 ? styles.activeDot : styles.inactiveDot]} />
@@ -260,42 +331,23 @@ const HomeScreen = ({ navigation, route }) => {
         </View>
       </View>
 
-      {/*
-<View style={styles.horizontalContainer}>
-  <View style={styles.squareButtonContainer}>
-    <TouchableOpacity
-      style={styles.squareButton}
-      onPress={() => navigation.navigate('ComprasVentasScreen')}
-    >
-      <Image
-        source={require('../assets/ventas.png')}
-        style={{ width: scale(60), height: scale(60), marginBottom: 5 }}
-        resizeMode="contain"
-      />
-      <Text style={styles.squareButtonText}>Compras - Ventas</Text>
-    </TouchableOpacity>
-  </View>
-</View>
-*/}
-
-
-        {/* Botón visible solo para admin */}
-        {userRole === 'admin' && (
-          <View style={styles.squareButtonContainer}>
-            <TouchableOpacity
-              style={styles.squareButton}
-              onPress={() => navigation.navigate('UserList')}
-            >
-              <Image
-                source={require('../assets/daralta.png')}
-                style={{ width: scale(46), height: scale(60), marginBottom: 5 }}
-                resizeMode="contain"
-              />
-              <Text style={styles.squareButtonText}>Dar de alta usuario</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+      {/* Botón visible solo para admin */}
+      {role === 'admin' && (
+        <View style={styles.squareButtonContainer}>
+          <TouchableOpacity
+            style={styles.squareButton}
+            onPress={() => navigation.navigate('UserList')}
+          >
+            <Image
+              source={require('../assets/daralta.png')}
+              style={{ width: scale(46), height: scale(60), marginBottom: 5 }}
+              resizeMode="contain"
+            />
+            <Text style={styles.squareButtonText}>Dar de alta usuario</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
   );
 };
 

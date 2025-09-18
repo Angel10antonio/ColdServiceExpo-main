@@ -39,10 +39,12 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const userCredential = await auth.signInWithEmailAndPassword(email, password); // Usa auth correctamente
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
       if (userCredential.user) {
-        const userDoc = await db.collection("users").doc(userCredential.user.uid).get(); // Usa db correctamente
-        const userRole = userDoc.data().role;
+        const userDoc = await db.collection("users").doc(userCredential.user.uid).get();
+        let userRole = userDoc.data().role.trim().toLowerCase(); // limpia espacios y minúsculas
+
+        // 🔹 Navega siempre al HomeScreen, pasando el rol
         navigation.replace("HomeScreen", { userRole });
       }
     } catch (error) {
@@ -60,7 +62,6 @@ const LoginScreen = ({ navigation }) => {
       resizeMode="cover"
     >
       <SafeAreaView style={styles.container}>
-        
         <Text style={styles.title}>Servicios de Refrigración</Text>
 
         <View style={styles.inputGroup}>
@@ -104,14 +105,12 @@ const LoginScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
 
-      <View style={{ flexDirection: "row", marginTop: 20 }}>
-        <Text style={styles.registerText}>¿No tienes cuenta? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate("RegisterScreen")}>
-          <Text style={styles.registerLink}>Regístrate</Text>
-        </TouchableOpacity>
-      </View>
-
-
+        <View style={{ flexDirection: "row", marginTop: 20 }}>
+          <Text style={styles.registerText}>¿No tienes cuenta? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate("RegisterScreen")}>
+            <Text style={styles.registerLink}>Regístrate</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     </ImageBackground>
   );
@@ -178,15 +177,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   registerText: {
-  fontSize: 16,
-  color: "#333",
+    fontSize: 16,
+    color: "#333",
   },
   registerLink: {
     fontSize: 16,
     color: "#000080",
     fontWeight: "bold",
   },
-
 });
 
 export default LoginScreen;

@@ -8,7 +8,8 @@ import {
   Animated,
 } from 'react-native';
 import firebase from '../database/firebase';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+//import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { collection, getDocs } from 'firebase/firestore';
 
 const { db } = firebase;

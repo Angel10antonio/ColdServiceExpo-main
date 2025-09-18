@@ -23,6 +23,23 @@ export default function HomeTabs({ route, navigation }) {
 
   const usuario = firebase.auth.currentUser;
 
+  const [rol, setRol] = useState('');
+
+  const getRolInfo = (rol) => {
+  const r = rol?.toLowerCase().trim(); // 👈 normaliza
+  switch (r) {
+    case 'admin':
+      return { icon: 'shield', color: '#007bff', label: 'Administrador' };
+    case 'gerente':
+      return { icon: 'briefcase', color: '#007bff', label: 'Gerente General' };
+    case 'gerentezona':
+      return { icon: 'map-marker', color: '#007bff', label: 'Gerente Zona' };
+    default:
+      return { icon: 'user', color: '#007bff', label: 'Usuario' };
+  }
+};
+
+
   // 🔹 Función para generar un PIN único de 4 dígitos
   const generarPinUnico = async () => {
     let unico = false;
@@ -47,6 +64,7 @@ export default function HomeTabs({ route, navigation }) {
             const data = doc.data();
             setNombre(data.nombre || '');
             setTelefono(data.telefono || '');
+            setRol(data.role?.toLowerCase() || ''); // 👈 aquí guardas el rol en minúsculas
 
             if (!data.pin) {
               const nuevoPin = await generarPinUnico();
@@ -173,6 +191,18 @@ export default function HomeTabs({ route, navigation }) {
                 <FontAwesome name="user" size={20} color="grey" />
                 <Text style={styles.label}>{nombre || 'Cargando...'}</Text>
               </View>
+
+               {/* 👇 Nuevo bloque para mostrar Rol */}
+      <View style={styles.row}>
+        <FontAwesome
+          name={getRolInfo(rol).icon}
+          size={20}
+          color={getRolInfo(rol).color}
+        />
+        <Text style={[styles.label, { color: getRolInfo(rol).color }]}>
+          {getRolInfo(rol).label || 'Cargando...'}
+        </Text>
+      </View>
 
               <View style={styles.row}>
                 <FontAwesome name="envelope" size={20} color="grey" />
