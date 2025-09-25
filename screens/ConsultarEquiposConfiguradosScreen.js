@@ -23,24 +23,29 @@ const ConsultarEquiposConfiguradosScreen = () => {
   const [atTop, setAtTop] = useState(true);
 
   useEffect(() => {
-    const obtenerEquipos = async () => {
-      try {
-        const snapshot = await db.collection('equipos_configurados').get();
-        if (!snapshot.empty) {
-          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setEquipos(data);
-        } else {
-          Alert.alert('Error', 'No se encontraron equipos configurados.');
-        }
-      } catch (error) {
-        console.error('Error al obtener los equipos:', error);
-        Alert.alert('Error', 'No se pudo obtener los equipos: ' + error.message);
-      } finally {
-        setLoading(false);
+  const obtenerEquipos = async () => {
+    try {
+      const snapshot = await db.collection('equipos_configurados').get();
+      if (!snapshot.empty) {
+        let data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // 🔹 Filtrar solo equipos de la tienda "OXXO"
+        data = data.filter(equipo => equipo.nombreTienda?.toLowerCase() === 'oxxo');
+
+        setEquipos(data);
+      } else {
+        Alert.alert('Error', 'No se encontraron equipos configurados.');
       }
-    };
-    obtenerEquipos();
-  }, []);
+    } catch (error) {
+      console.error('Error al obtener los equipos:', error);
+      Alert.alert('Error', 'No se pudo obtener los equipos: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  obtenerEquipos();
+}, []);
+
 
   const handlePressArrow = () => {
     if (!scrollRef.current) return;

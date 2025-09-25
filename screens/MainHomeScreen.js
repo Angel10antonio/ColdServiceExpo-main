@@ -76,9 +76,14 @@ const HomeScreen = ({ navigation, route }) => {
 
         <View style={[styles.horizontalContainer, { justifyContent: 'center' }]}>
           <TouchableOpacity
-            style={[styles.squareButtonContainer, { width: scale(150), height: scale(130) }]}
-            onPress={() => navigation.navigate('ConsultarProcesoReparacionesScreen')}
-          >
+  style={[styles.squareButtonContainer, { width: scale(150), height: scale(130) }]}
+  onPress={() =>
+    navigation.navigate('ConsultarProcesoReparacionesScreen', {
+      zona: route.params?.zona,           // 👈 Pasas la zona del gerente
+      tienda: route.params?.tienda || '' // 👈 Si el gerente ya eligió una tienda
+    })
+  }
+>
             <Image
               source={require('../assets/consultar.png')}
               style={{ width: scale(80), height: scale(50), marginBottom: 5 }}

@@ -77,6 +77,9 @@ const ConsultarProcesoReparacionScreen = () => {
   const [selectedSignature, setSelectedSignature] = useState(null);
   const [userRole, setUserRole] = useState('user'); // Por defecto "user"
 
+  const [userCity, setUserCity] = useState('');     // 🔹 nuevo
+const [userStore, setUserStore] = useState('');   // 🔹 nuevo
+
   const scrollRef = useRef(null);
   const scrollY = useRef({ scrollY: new Animated.Value(0), contentHeight: 0, scrollViewHeight: 0 });
   const [atTop, setAtTop] = useState(true);
@@ -88,44 +91,57 @@ const ConsultarProcesoReparacionScreen = () => {
 
 
   // Detectar rol del usuario
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
+ useEffect(() => {
+  const fetchUserData = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
 
-        const doc = await db.collection('users').doc(currentUser.uid).get();
-        if (doc.exists) {
-          const data = doc.data();
-          if (data.role === 'admin') {
-            setUserRole('admin');
-          }
-        }
-      } catch (error) {
-        console.error('Error obteniendo rol de usuario:', error);
+      const doc = await db.collection('users').doc(currentUser.uid).get();
+      if (doc.exists) {
+        const data = doc.data();
+        setUserRole(data.role || 'user');    // rol
+        setUserCity(data.ciudad || '');      // ciudad
+        setUserStore(data.tienda || '');     // tienda
       }
-    };
-    fetchUserRole();
-  }, []);
+    } catch (error) {
+      console.error('Error obteniendo datos de usuario:', error);
+    }
+  };
+  fetchUserData();
+}, []);
 
-  // Cargar procesos
-  useEffect(() => {
-    const fetchProcesos = async () => {
-      try {
-        const snapshot = await db.collection('proceso_reparacion').get();
-        const data = [];
-        snapshot.forEach((doc) => data.push({ id: doc.id, ...doc.data() }));
-        data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-        setProcesos(data);
-      } catch (error) {
-        console.error(error);
-        Alert.alert('Error', 'Hubo un problema al cargar los procesos.');
-      } finally {
-        setLoading(false);
+
+  // 🔹 Solo traer reportes cuando ya tenemos los datos del usuario
+useEffect(() => {
+  if (!userRole) return; // Si todavía no tenemos rol, no hacemos nada
+
+  const fetchProcesos = async () => {
+    try {
+      const snapshot = await db.collection('proceso_reparacion').get();
+      let data = [];
+      snapshot.forEach((doc) => data.push({ id: doc.id, ...doc.data() }));
+
+      data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+      // 🔹 Filtrar solo por tienda si es gerente
+      if (userRole === 'gerente') {
+        data = data.filter(item => item.tienda === userStore);
       }
-    };
-    fetchProcesos();
-  }, []);
+
+      setProcesos(data);
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Hubo un problema al cargar los procesos.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchProcesos();
+}, [userRole, userStore]); // Dependencias
+
+
 
   // Listener scroll
   useEffect(() => {

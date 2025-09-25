@@ -9,14 +9,14 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Picker } from "@react-native-picker/picker"; // 👈 Importa el Picker
+import { Picker } from "@react-native-picker/picker"; 
 import firebaseApp from "../database/firebase";
 
 const { auth, db } = firebaseApp;
 
 const RegistrarScreen = ({ navigation }) => {
   const [nombre, setNombre] = useState("");
-  const [empresa, setEmpresa] = useState("");
+  const [tienda, setTienda] = useState(""); // antes empresa
   const [telefono, setTelefono] = useState("");
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
@@ -24,32 +24,31 @@ const RegistrarScreen = ({ navigation }) => {
 
   // Campos para Gerente General
   const [estado, setEstado] = useState("");
-  const [tienda, setTienda] = useState("");
+  const [tiendaGeneral, setTiendaGeneral] = useState(""); // si quieres mantener separado
 
   // Campos para Gerente Zona
   const [ciudad, setCiudad] = useState("");
   const [tiendaZona, setTiendaZona] = useState("");
-  const [puntoZona, setPuntoZona] = useState("");
+  const [directienda, setDirectienda] = useState(""); // antes puntoZona
 
   // 👇 Estado para el rol
   const [rol, setRol] = useState("usuario");
 
   const handleRegister = async () => {
-    if (!nombre || !empresa || !telefono || !correo || !password || !rol) {
+    if (!nombre || !tienda || !telefono || !correo || !password || !rol) {
       Alert.alert("Error", "Por favor completa todos los campos");
       return;
     }
 
-    // Validaciones adicionales según rol
-    if (rol === "gerente" && (!estado || !tienda)) {
+    if (rol === "gerente" && (!estado || !tiendaGeneral)) {
       Alert.alert("Error", "Por favor completa Estado y Nombre de la tienda");
       return;
     }
 
-    if (rol === "gerentezona" && (!ciudad || !tiendaZona || !puntoZona)) {
+    if (rol === "gerentezona" && (!ciudad || !tiendaZona || !directienda)) {
       Alert.alert(
         "Error",
-        "Por favor completa Ciudad, Nombre de la tienda y Punto de zona"
+        "Por favor completa Ciudad, Nombre de la tienda y Directienda"
       );
       return;
     }
@@ -61,28 +60,26 @@ const RegistrarScreen = ({ navigation }) => {
       );
       const user = userCredential.user;
 
-      // Construir objeto de datos a guardar
       let data = {
         uid: user.uid,
         nombre,
-        empresa,
+        tienda, // antes empresa
         telefono,
         correo,
-        role: rol, // 👈 Guardamos el rol elegido
+        role: rol,
       };
 
       if (rol === "gerente") {
         data.estado = estado;
-        data.tienda = tienda;
+        data.tienda = tiendaGeneral;
       }
 
       if (rol === "gerentezona") {
-        data.ciudad = ciudad;
+        data.zona = ciudad; // antes ciudad
         data.tienda = tiendaZona;
-        data.puntoZona = puntoZona;
+        data.directienda = directienda; // antes puntoZona
       }
 
-      // Guardar en Firestore
       await db.collection("users").doc(user.uid).set(data);
 
       Alert.alert("Éxito", "Usuario registrado correctamente");
@@ -106,10 +103,10 @@ const RegistrarScreen = ({ navigation }) => {
 
       <TextInput
         style={styles.input}
-        placeholder="Empresa"
+        placeholder="Tienda"
         placeholderTextColor="#888"
-        value={empresa}
-        onChangeText={setEmpresa}
+        value={tienda}
+        onChangeText={setTienda}
       />
 
       <TextInput
@@ -131,7 +128,6 @@ const RegistrarScreen = ({ navigation }) => {
         autoCapitalize="none"
       />
 
-      {/* Campo de contraseña */}
       <View style={styles.passwordContainer}>
         <TextInput
           style={styles.passwordInput}
@@ -153,7 +149,6 @@ const RegistrarScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Selector de rol */}
       <Text style={styles.usuario}>Seleccione su rol de usuario</Text>
       <View style={styles.input}>
         {rol === "" && (
@@ -172,7 +167,6 @@ const RegistrarScreen = ({ navigation }) => {
           <Picker.Item label="Gerente Zona" value="gerentezona" />
         </Picker>
 
-        {/* Campos para Gerente General */}
         {rol === "gerente" && (
           <View style={styles.gerenteFields}>
             <Text>Estado:</Text>
@@ -187,13 +181,12 @@ const RegistrarScreen = ({ navigation }) => {
             <TextInput
               style={styles.input}
               placeholder="Ingresa el nombre de tu tienda"
-              value={tienda}
-              onChangeText={setTienda}
+              value={tiendaGeneral}
+              onChangeText={setTiendaGeneral}
             />
           </View>
         )}
 
-        {/* Campos para Gerente Zona */}
         {rol === "gerentezona" && (
           <View style={styles.gerenteFields}>
             <Text>Ciudad:</Text>
@@ -212,12 +205,12 @@ const RegistrarScreen = ({ navigation }) => {
               onChangeText={setTiendaZona}
             />
 
-            <Text>Punto de zona:</Text>
+            <Text>Directienda:</Text>
             <TextInput
               style={styles.input}
-              placeholder="Ingresa el punto de zona"
-              value={puntoZona}
-              onChangeText={setPuntoZona}
+              placeholder="Ingresa la directienda"
+              value={directienda}
+              onChangeText={setDirectienda}
             />
           </View>
         )}
@@ -305,9 +298,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   usuario: {
-     color: "#000080",
-     width: "95%",
-  }
+    color: "#000080",
+    width: "95%",
+  },
 });
 
 export default RegistrarScreen;
