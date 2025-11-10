@@ -16,6 +16,8 @@ import firebase from '../database/firebase';
 import { collection, addDoc, getDoc, doc } from 'firebase/firestore';
 //import Signature from 'react-native-signature-canvas'; // Asegúrate de tener esta importación
 import Icon from 'react-native-vector-icons/MaterialIcons'; // Para el icono en el botón
+import { Picker } from '@react-native-picker/picker';
+
 const { db, auth } = firebase;
 
 const CapturaProcesoReparacionScreen = () => {
@@ -210,6 +212,7 @@ const [pin, setPin] = useState('');
         prestador: 'COLD SERVICE REFRIGERATION, SA DE C.V. (Héctor Espinoza)',
         reporte,
         ruta,
+        uid: auth.currentUser ? auth.currentUser.uid : '',
         cuadrilla,
         falla_reportada: fallaReportada, // Guardamos la falla reportada
         reportada_por: reportadaPor, // Guardamos quien reportó
@@ -287,21 +290,78 @@ const [pin, setPin] = useState('');
         placeholder="Ingrese la plaza"
       />
 
-      <Text style={styles.label}>Dirección de tienda:</Text>
+      {/*<Text style={styles.label}>Dirección de tienda:</Text>
       <TextInput
         style={styles.input}
         value={directienda}
         onChangeText={setDirecciontienda}
         placeholder="Ingrese la dirección de la tienda"
-      />
+      /> */}
 
       <Text style={styles.label}>Tienda:</Text>
+<Picker
+  selectedValue={tienda}
+  onValueChange={(itemValue, itemIndex) => setTienda(itemValue)}
+  style={{
+    height: 60,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    fontSize: 16,
+    marginBottom: 20,
+  }}
+  itemStyle={{
+    fontSize: 16,
+    height: 50,
+    color: '#333',
+  }}
+>
+  <Picker.Item label="Oxxo" value="Oxxo" />
+  <Picker.Item label="Super Grant L" value="Super Grant L" />
+  <Picker.Item label="Walmart" value="Walmart" />
+  <Picker.Item label="Soriana" value="Soriana" />
+</Picker>
+
+
+
+
+
+
+      <Text style={styles.label}>Dirección de tienda:</Text>
+<Picker
+  selectedValue={directienda}
+  onValueChange={(itemValue, itemIndex) => setDirecciontienda(itemValue)}
+  style={{
+    height: 60,          // altura del Picker
+    width: '100%',       // ancho completo
+    borderWidth: 1,      // borde
+    borderColor: '#ccc', // color del borde
+    borderRadius: 8,     // esquinas redondeadas
+    paddingHorizontal: 10,
+    justifyContent: 'center', // centra el texto verticalmente
+    backgroundColor: '#fff',
+  }}
+  itemStyle={{ 
+    fontSize: 16,       // tamaño de texto de las opciones
+    height: 50,         // altura de cada item
+  }}
+>
+  <Picker.Item label="Quiroga" value="Quiroga" />
+  <Picker.Item label="Plaza Encinas " value="Plaza Encinas" />
+  <Picker.Item label="Centro" value="Centro" />
+</Picker>
+
+
+      {/*<Text style={styles.label}>Tienda:</Text>
       <TextInput
         style={styles.input}
         value={tienda}
         onChangeText={setTienda}
         placeholder="Ingrese nombre de la tienda"
-      />
+      />*/}
 
       <Text style={styles.label}>Fecha:</Text>
       <TouchableOpacity

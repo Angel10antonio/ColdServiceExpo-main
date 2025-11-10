@@ -9,6 +9,7 @@ import {
   View,
   ImageBackground,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import firebase from "../database/firebase"; // Importa firebase como un objeto
@@ -56,12 +57,21 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
+
+    
     <ImageBackground
       source={require("../assets/login.jpg")}
       style={styles.background}
       resizeMode="cover"
     >
       <SafeAreaView style={styles.container}>
+
+        {/* Logo encima del fondo */}
+      <Image
+        source={require("../assets/frigologo.png")}
+        style={styles.logo}
+        resizeMode="contain"
+      />
         <Text style={styles.title}>Servicios de Refrigración</Text>
 
         <View style={styles.inputGroup}>
@@ -128,6 +138,11 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "rgba(255, 255, 255, 0.8)",
   },
+  logo: {
+    width: 550,     // 👈 ancho en píxeles
+    height: 400,    // 👈 alto en píxeles
+    marginBottom: -130, // espacio inferior opcional
+  },
   title: {
     fontSize: 28,
     fontWeight: "bold",
@@ -185,6 +200,7 @@ const styles = StyleSheet.create({
     color: "#000080",
     fontWeight: "bold",
   },
+
 });
 
 export default LoginScreen;

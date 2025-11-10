@@ -39,6 +39,7 @@ const ListaUsuariosScreen = ({ navigation }) => {
             <View style={styles.userInfo}>
               <Text style={styles.nombre}>{item.nombre || "Sin nombre"}</Text>
               <Text style={styles.correo}>{item.correo || "Sin correo"}</Text>
+              <Text style={styles.role}>{item.role || "No definido"}</Text>
             </View>
           </TouchableOpacity>
         )}
@@ -90,6 +91,10 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   correo: {
+    color: "#777",
+    fontSize: 14,
+  },
+  role: {
     color: "#777",
     fontSize: 14,
   },

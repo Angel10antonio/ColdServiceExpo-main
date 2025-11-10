@@ -197,21 +197,58 @@ const RegistrarScreen = ({ navigation }) => {
               onChangeText={setCiudad}
             />
 
-            <Text>Nombre de la tienda:</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ingresa el nombre de tu tienda"
-              value={tiendaZona}
-              onChangeText={setTiendaZona}
-            />
+            <Text style={styles.label}>Nombre de la tienda:</Text>
+<Picker
+  selectedValue={tiendaZona}
+  onValueChange={(itemValue, itemIndex) => setTiendaZona(itemValue)}
+  style={{
+    height: 60,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    fontSize: 16,
+    marginBottom: 20,
+  }}
+  itemStyle={{
+    fontSize: 16,
+    height: 50,
+    color: '#333',
+  }}
+>
+  <Picker.Item label="Oxxo" value="Oxxo" />
+  <Picker.Item label="Super Grant L" value="Super Grant L" />
+  <Picker.Item label="Walmart" value="Walmart" />
+  <Picker.Item label="Soriana" value="Soriana" />
+</Picker>
 
-            <Text>Directienda:</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ingresa la directienda"
-              value={directienda}
-              onChangeText={setDirectienda}
-            />
+            <Text style={styles.label}>Dirección tienda:</Text>
+<Picker
+  selectedValue={directienda}
+  onValueChange={(itemValue, itemIndex) => setDirectienda(itemValue)}
+  style={{
+    height: 60,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    fontSize: 16,
+    marginBottom: 20,
+  }}
+  itemStyle={{
+    fontSize: 16,
+    height: 50,
+    color: '#333',
+  }}
+>
+  <Picker.Item label="Quiroga" value="Quiroga" />
+  <Picker.Item label="Solidaridad" value="Solidaridad" />
+  <Picker.Item label="Progreso" value="Progreso" />
+</Picker>
           </View>
         )}
       </View>

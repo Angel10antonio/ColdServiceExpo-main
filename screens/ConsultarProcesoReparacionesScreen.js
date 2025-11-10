@@ -69,7 +69,7 @@ const CustomScrollView = React.forwardRef(({ children, scrollYRef }, ref) => {
   );
 });
 
-const ConsultarProcesoReparacionScreen = () => {
+const ConsultarProcesoReparacionScreen = ({ route }) => {
   const [procesos, setProcesos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -87,11 +87,18 @@ const [userStore, setUserStore] = useState('');   // 🔹 nuevo
   const [modalRechazoVisible, setModalRechazoVisible] = useState(false);
   const [razonRechazo, setRazonRechazo] = useState('');
   const [idRechazando, setIdRechazando] = useState(null);
+  const [userDireccion, setUserDireccion] = useState('');
 
+    const { tienda, directienda } = route.params || {};
 
+// Asignar tienda/dirección si vienen desde route.params
+useEffect(() => {
+  if (tienda) setUserStore(tienda);
+  if (directienda) setUserDireccion(directienda);
+}, [tienda, directienda]);
 
-  // Detectar rol del usuario
- useEffect(() => {
+// Detectar rol del usuario y cargar datos
+useEffect(() => {
   const fetchUserData = async () => {
     try {
       const currentUser = auth.currentUser;
@@ -100,46 +107,95 @@ const [userStore, setUserStore] = useState('');   // 🔹 nuevo
       const doc = await db.collection('users').doc(currentUser.uid).get();
       if (doc.exists) {
         const data = doc.data();
-        setUserRole(data.role || 'user');    // rol
-        setUserCity(data.ciudad || '');      // ciudad
-        setUserStore(data.tienda || '');     // tienda
+        setUserRole((data.role || 'user').toLowerCase()); // 👈 convierte a minúsculas
+
+        // 🟢 Solo asignar tienda/dirección si no vienen desde el menú
+        if (!tienda) setUserStore(data.tienda || '');
+        if (!directienda) setUserDireccion(data.directienda || '');
       }
     } catch (error) {
       console.error('Error obteniendo datos de usuario:', error);
     }
   };
   fetchUserData();
-}, []);
+}, [tienda, directienda]);
 
-
-  // 🔹 Solo traer reportes cuando ya tenemos los datos del usuario
+// Cargar procesos de reparación según rol y tienda/dirección
+// Cargar procesos de reparación según rol y tienda/dirección
 useEffect(() => {
-  if (!userRole) return; // Si todavía no tenemos rol, no hacemos nada
-
+  if (!userRole || !auth.currentUser) return;
+ 
   const fetchProcesos = async () => {
     try {
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        console.log('⏳ Esperando a que Firebase cargue el usuario...');
+        return;
+      }
+
+      console.log('👤 Usuario autenticado UID:', currentUser.uid);
+      console.log('👤 Rol actual:', userRole);
+
       const snapshot = await db.collection('proceso_reparacion').get();
       let data = [];
       snapshot.forEach((doc) => data.push({ id: doc.id, ...doc.data() }));
 
+      console.log('📦 Total documentos obtenidos:', data.length);
+
+      // Ordenar por fecha descendente
       data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-      // 🔹 Filtrar solo por tienda si es gerente
-      if (userRole === 'gerente') {
-        data = data.filter(item => item.tienda === userStore);
+      // 🧩 Filtro según rol
+      switch (userRole) {
+        case 'gerente':
+          data = data.filter((item) => item.tienda === userStore);
+          break;
+
+        case 'gerentezona':
+          data = data.filter(
+            (item) =>
+              item.tienda === userStore &&
+              item.directienda === userDireccion
+          );
+          break;
+
+        case 'user':
+          case 'usuario': 
+          console.log('🔎 Filtrando reportes por UID de usuario...');
+          const filtrados = data.filter((item) => item.uid === currentUser.uid);
+          console.log('📋 Coincidencias encontradas:', filtrados.length);
+          if (filtrados.length === 0) {
+            console.log('⚠️ Ningún documento coincide con el UID:', currentUser.uid);
+          } else {
+            console.log('✅ Primer documento coincide:', filtrados[0]);
+          }
+          data = filtrados;
+          break;
+
+        default:
+          data = [];
+          break;
       }
 
+      console.log('✅ Procesos finales a mostrar:', data.length);
       setProcesos(data);
     } catch (error) {
-      console.error(error);
+      console.error('❌ Error al cargar procesos:', error);
       Alert.alert('Error', 'Hubo un problema al cargar los procesos.');
     } finally {
       setLoading(false);
     }
   };
 
-  fetchProcesos();
-}, [userRole, userStore]); // Dependencias
+  // 🕓 Solo ejecuta cuando ya sabemos el rol y el usuario está listo
+  if (userRole && auth.currentUser) {
+    fetchProcesos();
+  }
+}, [userRole, userStore, userDireccion]);
+
+
+
 
 
 

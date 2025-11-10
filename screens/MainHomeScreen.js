@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   Dimensions,
+
 } from 'react-native';
 
 // Escalado dinámico según el ancho de pantalla
@@ -30,7 +31,7 @@ const HomeScreen = ({ navigation, route }) => {
   };
 
   // --------------------
-  // MENÚ GERENTE
+  // MENÚ GERENTE GENERAL
   // --------------------
   if (role === 'gerente') {
     return (
@@ -68,46 +69,45 @@ const HomeScreen = ({ navigation, route }) => {
 
   // --------------------
   // MENÚ GERENTE DE ZONA
-  // --------------------
-  if (role === 'gerentezona') {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.header}>MENÚ GERENTE DE ZONA</Text>
+// --------------------
+if (role === 'gerentezona') {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>MENÚ GERENTE DE ZONA</Text>
 
-        <View style={[styles.horizontalContainer, { justifyContent: 'center' }]}>
-          <TouchableOpacity
-  style={[styles.squareButtonContainer, { width: scale(150), height: scale(130) }]}
-  onPress={() =>
-    navigation.navigate('ConsultarProcesoReparacionesScreen', {
-      zona: route.params?.zona,           // 👈 Pasas la zona del gerente
-      tienda: route.params?.tienda || '' // 👈 Si el gerente ya eligió una tienda
-    })
-  }
->
-            <Image
-              source={require('../assets/consultar.png')}
-              style={{ width: scale(80), height: scale(50), marginBottom: 5 }}
-              resizeMode="contain"
-            />
-            <Text style={styles.squareButtonText}>Reparaciones Zona</Text>
-          </TouchableOpacity>
+      <View style={[styles.horizontalContainer, { justifyContent: 'center' }]}>
+        <TouchableOpacity
+          style={[styles.squareButtonContainer, { width: scale(150), height: scale(130) }]}
+         onPress={() =>
+  navigation.navigate('ConsultarProcesoReparacionesScreen', {
+    tienda: route.params?.tienda || '',
+    directienda: route.params?.directienda || ''
+  })
+}
+        >
+          <Image
+            source={require('../assets/consultar.png')}
+            style={{ width: scale(80), height: scale(50), marginBottom: 5 }}
+            resizeMode="contain"
+          />
+          <Text style={styles.squareButtonText}>Reparaciones Zona</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.squareButtonContainer, { width: scale(150), height: scale(130), marginLeft: scale(20) }]}
-            onPress={() => navigation.navigate('ConsultarEquiposConfiguradosScreen')}
-          >
-            <Image
-              source={require('../assets/consultar.png')}
-              style={{ width: scale(80), height: scale(50), marginBottom: 5 }}
-              resizeMode="contain"
-            />
-            <Text style={styles.squareButtonText}>Técnicos Zona</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.squareButtonContainer, { width: scale(150), height: scale(130), marginLeft: scale(20) }]}
+          onPress={() => navigation.navigate('ConsultarEquiposConfiguradosScreen')}
+        >
+          <Image
+            source={require('../assets/consultar.png')}
+            style={{ width: scale(80), height: scale(50), marginBottom: 5 }}
+            resizeMode="contain"
+          />
+          <Text style={styles.squareButtonText}>Técnicos Zona</Text>
+        </TouchableOpacity>
       </View>
-    );
-  }
-
+    </View>
+  );
+}
   // --------------------
   // MENÚ ADMIN / USUARIO
   // --------------------
